@@ -1,18 +1,17 @@
+using Platform;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.Use(async (context, next) => {
-    if (context.Request.Query["custom"] == "true")
-    {
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("Hi");
-    }
-    else if (context.Request.Query["custom"] == "fuck")
-    {
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("Fuck");
-    }
-    else
-        await next();
+((IApplicationBuilder)app).Map("/branch", branch => {
+    branch.UseMiddleware<Platform.QueryStringMiddleWare>();
+    branch.Use(async (HttpContext context, Func<Task> next) => {
+        await context.Response.WriteAsync($"Branch Middleware");
+    });
 });
+
+app.Map("/", () => "Hello World");
+app.UseMiddleware<LocationMiddleware>();
+
+app.UseMiddleware<Platform.QueryStringMiddleWare>();
 app.Run();
